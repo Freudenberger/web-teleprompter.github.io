@@ -83,8 +83,8 @@
             <section id="setupScreen" class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
                 <div class="flex flex-col min-h-0">
                     <label for="scriptInput" class="mb-2 text-sm font-medium">Script</label>
-                    <textarea id="scriptInput" class="flex-1 w-full resize-none rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 p-3 font-mono text-sm" placeholder="Paste or type your script here…"></textarea>
-                    <div class="mt-2 flex items-center gap-2">
+                    <textarea id="scriptInput" class="flex-1 w-full min-h-48 sm:min-h-0 resize-none rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 p-2 sm:p-3 font-mono text-sm" placeholder="Paste or type your script here…"></textarea>
+                    <div class="mt-2 flex flex-col sm:flex-row sm:items-center gap-2">
                         <button id="btnSample" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample text</button>
                         <button id="btnClear" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Clear</button>
                     </div>
@@ -92,8 +92,11 @@
 
                 <aside class="flex flex-col gap-4">
                     <div>
-                        <h2 class="text-sm font-semibold mb-2">Settings</h2>
-                        <div class="space-y-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <h2 class="text-sm font-semibold">Settings</h2>
+                            <button id="btnToggleSettings" class="sm:hidden px-2 py-1 text-xs rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Show</button>
+                        </div>
+                        <div id="settingsPanel" class="hidden sm:block space-y-4">
                             <!-- Font size -->
                             <div>
                                 <label class="flex justify-between text-sm mb-1">
@@ -138,8 +141,8 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="mt-3 flex justify-end">
-                            <button id="btnResetSettings" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 text-sm">Reset to defaults</button>
+                        <div class="mt-3 flex justify-center sm:justify-end">
+                            <button id="btnResetSettings" class="w-full sm:w-auto px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 text-sm">Reset to defaults</button>
                         </div>
                     </div>
                     <div class="mt-auto flex justify-end">
@@ -151,29 +154,29 @@
             <!-- Reading Mode -->
             <section id="readingScreen" class="hidden relative h-full">
                 <!-- Overlay controls -->
-                <div id="overlay" class="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-2 bg-black/60 text-white opacity-100 transition-opacity duration-300 ease-in-out">
-                    <div class="flex items-center gap-3 text-sm">
-                        <button id="btnPauseResume" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Pause</button>
-                        <button id="btnRestart" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Restart</button>
-                        <button id="btnStop" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Stop</button>
-                        <button id="btnFullscreen" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Fullscreen</button>
+                <div id="overlay" class="absolute inset-x-0 top-0 z-20 flex flex-col sm:flex-row sm:items-center sm:justify-between px-4 py-2 bg-black/60 text-white opacity-100 transition-opacity duration-300 ease-in-out">
+                    <div class="flex items-center gap-2 text-sm mb-2 sm:mb-0">
+                        <button id="btnPauseResume" class="px-2 py-1 sm:px-3 rounded bg-white/10 hover:bg-white/20 text-xs sm:text-sm">Pause</button>
+                        <button id="btnRestart" class="px-2 py-1 sm:px-3 rounded bg-white/10 hover:bg-white/20 text-xs sm:text-sm">Restart</button>
+                        <button id="btnStop" class="px-2 py-1 sm:px-3 rounded bg-white/10 hover:bg-white/20 text-xs sm:text-sm">Stop</button>
+                        <button id="btnFullscreen" class="px-2 py-1 sm:px-3 rounded bg-white/10 hover:bg-white/20 text-xs sm:text-sm">Fullscreen</button>
                     </div>
-                    <div class="flex items-center gap-4 text-sm">
-                        <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 text-xs sm:text-sm flex-wrap">
+                        <div class="flex items-center gap-1">
                             <label for="readSpeed" class="text-xs">Speed <span id="readSpeedValue">21</span></label>
-                            <input id="readSpeed" type="range" min="0" max="100" class="w-32" />
+                            <input id="readSpeed" type="range" min="0" max="100" class="w-16 sm:w-20 md:w-32" />
                         </div>
-                        <div class="hidden md:flex items-center gap-2">
-                            <label for="readFontSize" class="text-xs">Size <span id="readFontSizeValue">56</span></label>
-                            <input id="readFontSize" type="range" min="16" max="120" class="w-28" />
+                        <div class="flex items-center gap-1">
+                            <label for="readFontSize" class="hidden sm:inline text-xs">Size <span id="readFontSizeValue">56</span></label>
+                            <input id="readFontSize" type="range" min="16" max="120" class="w-12 sm:w-16 md:w-20 lg:w-28" />
                         </div>
-                        <div class="hidden lg:flex items-center gap-2">
-                            <label for="readLineHeight" class="text-xs">LH <span id="readLineHeightValue">1.4</span></label>
-                            <input id="readLineHeight" type="range" min="1.1" max="2.0" step="0.05" class="w-24" />
+                        <div class="flex items-center gap-1">
+                            <label for="readLineHeight" class="hidden md:inline text-xs">LH <span id="readLineHeightValue">1.4</span></label>
+                            <input id="readLineHeight" type="range" min="1.1" max="2.0" step="0.05" class="w-12 sm:w-16 md:w-20 lg:w-24" />
                         </div>
-                        <div class="hidden lg:flex items-center gap-2">
-                            <label for="readTextWidth" class="text-xs">Width <span id="readTextWidthValue">70</span>ch</label>
-                            <input id="readTextWidth" type="range" min="40" max="150" class="w-24" />
+                        <div class="flex items-center gap-1">
+                            <label for="readTextWidth" class="hidden lg:inline text-xs">Width <span id="readTextWidthValue">70</span>ch</label>
+                            <input id="readTextWidth" type="range" min="40" max="150" class="w-12 sm:w-16 md:w-20 lg:w-24" />
                         </div>
                     </div>
                 </div>
@@ -318,6 +321,20 @@
                 const lineHeightValue = document.getElementById('lineHeightValue');
                 const speedValue = document.getElementById('speedValue');
                 const textWidthValue = document.getElementById('textWidthValue');
+
+                const btnToggleSettings = document.getElementById('btnToggleSettings');
+                const settingsPanel = document.getElementById('settingsPanel');
+
+                btnToggleSettings.addEventListener('click', () => {
+                    const isHidden = settingsPanel.classList.contains('hidden');
+                    if (isHidden) {
+                        settingsPanel.classList.remove('hidden');
+                        btnToggleSettings.textContent = 'Hide';
+                    } else {
+                        settingsPanel.classList.add('hidden');
+                        btnToggleSettings.textContent = 'Show';
+                    }
+                });
 
                 const s = getState();
                 scriptInput.value = s.scriptText || '';
