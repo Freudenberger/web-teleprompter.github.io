@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en" class="h-full dark">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Web Teleprompter</title>
+    <meta name="description" content="Simple, offline-capable web teleprompter" />
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind config: enable dark mode via class
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        bgLight: '#ffffff',
+                        bgDark: '#0b0b0b',
+                    },
+                },
+            },
+        };
+    </script>
+    <style>
+        button {
+            border: 1px solid !important;
+        }
+
+        /* Prevent text selection during drag in reading mode */
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Hide scrollbars in reading content for cleaner look (still scrollable) */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .high-contrast {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+
+        .high-contrast * {
+            background-color: #000 !important;
+            color: #fff !important;
+            border-color: #fff !important;
+        }
+
+        .sepia {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+        }
+
+        .sepia * {
+            background-color: #fef3c7 !important;
+            color: #92400e !important;
+            border-color: #92400e !important;
+        }
+    </style>
+</head>
+
+<body class="h-full bg-bgLight text-gray-900 dark:bg-bgDark dark:text-gray-100 transition-colors">
+    <div id="app" class="h-full flex flex-col">
+        <!-- Header -->
+        <header class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-white/10">
+            <h1 class="text-lg font-semibold">Web Teleprompter</h1>
+            <nav class="text-sm">
+                <a id="aboutLink" href="#" class="text-blue-600 dark:text-blue-400 hover:underline">About</a>
+            </nav>
+        </header>
+
+        <!-- Main -->
+        <main id="main" class="flex-1 flex flex-col">
+            <!-- Setup Screen -->
+            <section id="setupScreen" class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+                <div class="flex flex-col min-h-0">
+                    <label for="scriptInput" class="mb-2 text-sm font-medium">Script</label>
+                    <textarea id="scriptInput" class="flex-1 w-full resize-none rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 p-3 font-mono text-sm" placeholder="Paste or type your script here…"></textarea>
+                    <div class="mt-2 flex items-center gap-2">
+                        <button id="btnSample" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample text</button>
+                        <button id="btnClear" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Clear</button>
+                    </div>
+                </div>
+
+                <aside class="flex flex-col gap-4">
+                    <div>
+                        <h2 class="text-sm font-semibold mb-2">Settings</h2>
+                        <div class="space-y-4">
+                            <!-- Font size -->
+                            <div>
+                                <label class="flex justify-between text-sm mb-1">
+                                    <span>Font size</span>
+                                    <span><span id="fontSizeValue">56</span> px</span>
+                                </label>
+                                <input id="fontSize" type="range" min="16" max="120" value="56" class="w-full" />
+                            </div>
+                            <!-- Line height -->
+                            <div>
+                                <label class="flex justify-between text-sm mb-1">
+                                    <span>Line height</span>
+                                    <span><span id="lineHeightValue">1.4</span></span>
+                                </label>
+                                <input id="lineHeight" type="range" min="1.1" max="2.0" step="0.05" value="1.4" class="w-full" />
+                            </div>
+                            <!-- Speed -->
+                            <div>
+                                <label class="flex justify-between text-sm mb-1">
+                                    <span>Speed</span>
+                                    <span><span id="speedValue">21</span></span>
+                                </label>
+                                <input id="speed" type="range" min="0" max="100" value="21" class="w-full" />
+                                <p class="text-xs text-gray-500 mt-1">0 = stop, higher = faster</p>
+                            </div>
+                            <!-- Text width -->
+                            <div>
+                                <label class="flex justify-between text-sm mb-1">
+                                    <span>Text width</span>
+                                    <span><span id="textWidthValue">70</span> ch</span>
+                                </label>
+                                <input id="textWidth" type="range" min="40" max="120" value="70" class="w-full" />
+                            </div>
+                            <!-- Theme toggle -->
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm">Theme</label>
+                                <select id="themeSelect" class="rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 px-2 py-1 text-sm">
+                                    <option value="dark">Dark</option>
+                                    <option value="light">Light</option>
+                                    <option value="sepia">Sepia</option>
+                                    <option value="high-contrast">High Contrast</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex justify-end">
+                            <button id="btnResetSettings" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10 text-sm">Reset to defaults</button>
+                        </div>
+                    </div>
+                    <div class="mt-auto flex justify-end">
+                        <button id="btnStart" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">Start</button>
+                    </div>
+                </aside>
+            </section>
+
+            <!-- Reading Mode -->
+            <section id="readingScreen" class="hidden relative h-full">
+                <!-- Overlay controls -->
+                <div id="overlay" class="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-2 bg-black/60 text-white opacity-100 transition-opacity duration-300 ease-in-out">
+                    <div class="flex items-center gap-3 text-sm">
+                        <button id="btnPauseResume" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Pause</button>
+                        <button id="btnRestart" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Restart</button>
+                        <button id="btnStop" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Stop</button>
+                        <button id="btnFullscreen" class="px-3 py-1 rounded bg-white/10 hover:bg-white/20">Fullscreen</button>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm">
+                        <div class="flex items-center gap-2">
+                            <label for="readSpeed" class="text-xs">Speed <span id="readSpeedValue">21</span></label>
+                            <input id="readSpeed" type="range" min="0" max="100" class="w-32" />
+                        </div>
+                        <div class="hidden md:flex items-center gap-2">
+                            <label for="readFontSize" class="text-xs">Size <span id="readFontSizeValue">56</span></label>
+                            <input id="readFontSize" type="range" min="16" max="120" class="w-28" />
+                        </div>
+                        <div class="hidden lg:flex items-center gap-2">
+                            <label for="readLineHeight" class="text-xs">LH <span id="readLineHeightValue">1.4</span></label>
+                            <input id="readLineHeight" type="range" min="1.1" max="2.0" step="0.05" class="w-24" />
+                        </div>
+                        <div class="hidden lg:flex items-center gap-2">
+                            <label for="readTextWidth" class="text-xs">Width <span id="readTextWidthValue">70</span>ch</label>
+                            <input id="readTextWidth" type="range" min="40" max="150" class="w-24" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- End of script indicator -->
+                <div id="endIndicator" class="hidden absolute bottom-4 inset-x-0 text-center z-20">
+                    <span class="inline-block bg-black/60 text-white px-3 py-1 rounded">End of script</span>
+                </div>
+
+                <!-- Scroll container -->
+                <div id="readContainer" class="absolute inset-0 overflow-y-auto no-scrollbar">
+                    <div id="readContent" class="mx-auto px-4 sm:px-6 md:px-8 py-16" style="text-align: center;display: flex !important;align-content: center;align-items: center;flex-direction: column;"></div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer (optional) -->
+        <footer class="px-4 py-2 text-xs text-gray-500 border-t border-gray-200 dark:border-white/10">
+            Offline, client-side only. No data leaves your browser. Copyright &copy; 2025 by <a href="https://github.com/Freudenberger" class="underline">Freudenberger</a>
+        </footer>
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 rounded-lg max-w-md w-full mx-4">
+            <h2 class="text-xl font-bold mb-4">About Web Teleprompter</h2>
+            <p class="mb-4">Simple, offline-capable web teleprompter. No data leaves your browser.</p>
+
+            <h3 class="font-semibold mb-2">Shortcuts</h3>
+            <ul class="mb-4 text-sm space-y-1">
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">Space</kbd>: Pause/Resume</li>
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">R</kbd>: Restart</li>
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">S</kbd>: Stop</li>
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">F</kbd>: Fullscreen</li>
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">↑/↓</kbd> or <kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">w/s</kbd> : Nudge</li>
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">+/=</kbd>: Speed up</li>
+                <li><kbd class="px-1 py-0.5 bg-gray-200 dark:bg-gray-700 rounded text-xs">-/_</kbd>: Speed down</li>
+            </ul>
+
+            <h3 class="font-semibold mb-2">Settings</h3>
+            <p class="mb-4 text-sm">Adjust font size, line height, speed, and text width in the setup screen. Theme toggle available.</p>
+
+            <h3 class="font-semibold mb-2">Author</h3>
+            <p class="mb-4 text-sm"><a href="https://github.com/Freudenberger" class="underline">Freudenberger</a></p>
+            Copyright &copy; 2025
+
+            <div class="flex justify-end">
+                <button id="closeAbout" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single-file inline app script (no modules, works over file://) -->
+    <script>
+        // ===== state.js =====
+        (function () {
+            const STORAGE_KEY = 'teleprompterState';
+            window.__DEFAULT_STATE__ = {
+                scriptText: '',
+                speed: 21,
+                fontSize: 56,
+                lineHeight: 1.4,
+                textWidthCh: 70,
+                theme: 'dark',
+            };
+            function loadState() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    if (!raw) return { ...window.__DEFAULT_STATE__ };
+                    const parsed = JSON.parse(raw);
+                    return { ...window.__DEFAULT_STATE__, ...parsed };
+                } catch (e) {
+                    console.warn('Failed to load state:', e);
+                    return { ...window.__DEFAULT_STATE__ };
+                }
+            }
+            function saveState(state) {
+                try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+                catch (e) { console.warn('Failed to save state:', e); }
+            }
+            function createState() {
+                let state = loadState();
+                const listeners = new Set();
+                function notify() { for (const fn of listeners) fn(state); }
+                return {
+                    get() { return state; },
+                    set(patch) { state = { ...state, ...patch }; saveState(state); notify(); },
+                    subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); },
+                    reset() { state = { ...window.__DEFAULT_STATE__, scriptText: '' }; saveState(state); notify(); },
+                };
+            }
+            function debounce(fn, wait = 250) { let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), wait); }; }
+            window.__createState__ = createState;
+            window.__debounce__ = debounce;
+        })();
+
+        // ===== scroll-engine.js =====
+        ; (function () {
+            class ScrollEngine {
+                constructor({ container }) {
+                    this.container = container;
+                    this.running = false;
+                    this.paused = false;
+                    this.speedUnits = 21;
+                    this.pxPerSecMax = 300;
+                    this.lastTs = 0;
+                    this.rafId = null;
+                    this.onEnd = null;
+                    this.scrollAccumulator = 0;
+                    this.loop = this.loop.bind(this);
+                    console.log('ScrollEngine initialized', this);
+                }
+                get pxPerSec() {
+                    return (this.speedUnits / 100) * this.pxPerSecMax;
+                }
+                setSpeed(units) { this.speedUnits = Math.max(0, Math.min(100, Number(units) || 0)); }
+                start() { this.running = true; this.paused = false; this.lastTs = 0; this.scrollAccumulator = 0; this.loop(0); }
+                pause() { this.paused = true; }
+                resume() { if (!this.running) return this.start(); this.paused = false; }
+                stop() { this.running = false; this.paused = false; if (this.rafId) cancelAnimationFrame(this.rafId); this.rafId = null; }
+                atEnd() { const { scrollTop, scrollHeight, clientHeight } = this.container; return scrollTop + clientHeight >= scrollHeight - 2; }
+                loop(ts) { if (!this.running) return; if (this.lastTs === 0) this.lastTs = ts; const dt = (ts - this.lastTs) / 1000; this.lastTs = ts; if (!this.paused && this.pxPerSec > 0 && !this.atEnd()) { this.scrollAccumulator += this.pxPerSec * dt; while (this.scrollAccumulator >= 1) { this.container.scrollTop += 1; this.scrollAccumulator -= 1; } } if (this.atEnd() && typeof this.onEnd === 'function') { const cb = this.onEnd; this.onEnd = null; cb(); } this.rafId = requestAnimationFrame(this.loop); }
+            }
+            window.__ScrollEngine__ = ScrollEngine;
+        })();
+
+        // ===== ui-setup.js =====
+        ; (function () {
+            function initSetupUI(app) {
+                const { getState, setState, switchToReading } = app;
+                const scriptInput = document.getElementById('scriptInput');
+                const btnStart = document.getElementById('btnStart');
+                const btnClear = document.getElementById('btnClear');
+                const btnSample = document.getElementById('btnSample');
+                const btnResetSettings = document.getElementById('btnResetSettings');
+                const fontSize = document.getElementById('fontSize');
+                const lineHeight = document.getElementById('lineHeight');
+                const speed = document.getElementById('speed');
+                const textWidth = document.getElementById('textWidth');
+                const themeSelect = document.getElementById('themeSelect');
+                const fontSizeValue = document.getElementById('fontSizeValue');
+                const lineHeightValue = document.getElementById('lineHeightValue');
+                const speedValue = document.getElementById('speedValue');
+                const textWidthValue = document.getElementById('textWidthValue');
+
+                const s = getState();
+                scriptInput.value = s.scriptText || '';
+                fontSize.value = s.fontSize; lineHeight.value = s.lineHeight; speed.value = s.speed; textWidth.value = s.textWidthCh;
+                themeSelect.value = s.theme;
+                fontSizeValue.textContent = s.fontSize; lineHeightValue.textContent = s.lineHeight; speedValue.textContent = s.speed; textWidthValue.textContent = s.textWidthCh;
+                applyTheme(s.theme);
+
+                btnStart.disabled = !scriptInput.value.trim();
+
+                const persist = window.__debounce__(() => setState({
+                    scriptText: scriptInput.value,
+                    fontSize: Number(fontSize.value),
+                    lineHeight: Number(lineHeight.value),
+                    speed: Number(speed.value),
+                    textWidthCh: Number(textWidth.value),
+                }), 200);
+
+                scriptInput.addEventListener('input', () => { btnStart.disabled = !scriptInput.value.trim(); persist(); });
+                fontSize.addEventListener('input', () => { fontSizeValue.textContent = fontSize.value; persist(); });
+                lineHeight.addEventListener('input', () => { lineHeightValue.textContent = lineHeight.value; persist(); });
+                speed.addEventListener('input', () => { speedValue.textContent = speed.value; persist(); });
+                textWidth.addEventListener('input', () => { textWidthValue.textContent = textWidth.value; persist(); });
+
+                themeSelect.addEventListener('change', () => {
+                    const theme = themeSelect.value;
+                    applyTheme(theme);
+                    setState({ theme });
+                });
+
+                btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; setState({ scriptText: '' }); });
+
+                btnSample.addEventListener('click', () => {
+                    const sample = `This is a sample teleprompter script.\n\nUse the speed slider to control auto-scroll.\nPress Space to pause/resume. F to toggle fullscreen. S to stop.\n\nDrag with mouse or finger to scroll manually.\nAdjust font size and line height to your liking.`;
+                    scriptInput.value = sample; btnStart.disabled = false; setState({ scriptText: sample });
+                });
+
+                btnStart.addEventListener('click', () => { if (!scriptInput.value.trim()) return; switchToReading(); });
+
+                // Reset to defaults (preserve script text)
+                btnResetSettings.addEventListener('click', () => {
+                    const d = window.__DEFAULT_STATE__;
+                    // Preserve existing script text
+                    const preservedScript = scriptInput.value;
+                    // Update inputs
+                    fontSize.value = d.fontSize; lineHeight.value = d.lineHeight; speed.value = d.speed; textWidth.value = d.textWidthCh; themeSelect.value = d.theme;
+                    fontSizeValue.textContent = d.fontSize; lineHeightValue.textContent = d.lineHeight; speedValue.textContent = d.speed; textWidthValue.textContent = d.textWidthCh;
+                    applyTheme(d.theme);
+                    setState({
+                        scriptText: preservedScript,
+                        fontSize: d.fontSize,
+                        lineHeight: d.lineHeight,
+                        speed: d.speed,
+                        textWidthCh: d.textWidthCh,
+                        theme: d.theme,
+                    });
+                });
+
+                function applyTheme(theme) {
+                    document.documentElement.classList.remove('dark', 'sepia', 'high-contrast');
+                    if (theme === 'dark') document.documentElement.classList.add('dark');
+                    else if (theme === 'sepia') document.documentElement.classList.add('sepia');
+                    else if (theme === 'high-contrast') document.documentElement.classList.add('high-contrast');
+                    // light is default, no class
+                }
+                window.applyTheme = applyTheme;
+            }
+            window.__initSetupUI__ = initSetupUI;
+        })();
+
+        // ===== ui-reading.js =====
+        ; (function () {
+            function initReadingUI(app) {
+                const { getState, setState, switchToSetup } = app;
+                const readingScreen = document.getElementById('readingScreen');
+                const overlay = document.getElementById('overlay');
+                const btnPauseResume = document.getElementById('btnPauseResume');
+                const btnRestart = document.getElementById('btnRestart');
+                const btnStop = document.getElementById('btnStop');
+                const btnFullscreen = document.getElementById('btnFullscreen');
+                const endIndicator = document.getElementById('endIndicator');
+                const readContainer = document.getElementById('readContainer');
+                const readContent = document.getElementById('readContent');
+                const readSpeed = document.getElementById('readSpeed');
+                const readFontSize = document.getElementById('readFontSize');
+                const readLineHeight = document.getElementById('readLineHeight');
+                const readTextWidth = document.getElementById('readTextWidth');
+                const readSpeedValue = document.getElementById('readSpeedValue');
+                const readFontSizeValue = document.getElementById('readFontSizeValue');
+                const readLineHeightValue = document.getElementById('readLineHeightValue');
+                const readTextWidthValue = document.getElementById('readTextWidthValue');
+
+                const engine = new window.__ScrollEngine__({ container: readContainer });
+                let ended = false;
+                function attachOnEnd() {
+                    engine.onEnd = () => {
+                        ended = true;
+                        btnPauseResume.textContent = 'Restart';
+                        engine.stop();
+                        endIndicator.classList.remove('hidden');
+                        showOverlay();
+                    };
+                }
+                attachOnEnd();
+
+                let overlayHideTimer = null; const OVERLAY_HIDE_MS = 2000;
+                function showOverlay() { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); if (overlayHideTimer) clearTimeout(overlayHideTimer); overlayHideTimer = setTimeout(() => { overlay.classList.remove('opacity-100'); overlay.classList.add('opacity-0'); }, OVERLAY_HIDE_MS); }
+
+                function render() {
+                    const s = getState();
+                    readContent.innerHTML = '';
+                    const wrapper = document.createElement('div');
+                    // Explicit width in ch for clear effect, capped to viewport width
+                    wrapper.style.width = `${s.textWidthCh}ch`;
+                    wrapper.style.maxWidth = '100%';
+                    wrapper.className = 'prose prose-invert dark:prose-invert leading-normal';
+                    const paragraphs = splitParagraphs(s.scriptText);
+                    const fontSizePx = `${s.fontSize}px`;
+                    const lh = s.lineHeight;
+                    const container = document.createElement('div');
+                    container.style.fontSize = fontSizePx; container.style.lineHeight = String(lh);
+                    container.className = 'mx-auto text-center no-select';
+                    // center text
+                    container.style.textAlign = 'center';
+
+                    // Top spacer to allow lines to pass through vertical center
+                    const topSpacer = document.createElement('div');
+                    topSpacer.id = 'topSpacer';
+                    topSpacer.style.height = `${Math.round(readContainer.clientHeight / 2)}px`;
+                    container.appendChild(topSpacer);
+                    // Paragraphs
+                    for (let i = 0; i < paragraphs.length; i++) {
+                        const p = paragraphs[i];
+                        const el = document.createElement('p');
+                        el.textContent = p;
+                        // Remove top margin for first paragraph for precise alignment
+                        el.className = i === 0 ? 'mt-0 mb-6' : 'my-6';
+                        container.appendChild(el);
+                    }
+                    // Bottom spacer so the script ends at vertical center when auto-scroll stops
+                    const bottomSpacer = document.createElement('div');
+                    bottomSpacer.id = 'bottomSpacer';
+                    bottomSpacer.style.height = `${Math.round(readContainer.clientHeight / 2)}px`;
+                    container.appendChild(bottomSpacer);
+                    wrapper.appendChild(container); readContent.appendChild(wrapper); endIndicator.classList.add('hidden');
+                }
+                function splitParagraphs(text) { return text.replace(/\r\n/g, '\n').split(/\n\s*\n|\n/g).map(s => s.trim()).filter(Boolean); }
+                function hydrateControls() { const s = getState(); readSpeed.value = s.speed; readFontSize.value = s.fontSize; readLineHeight.value = s.lineHeight; readTextWidth.value = s.textWidthCh; readSpeedValue.textContent = s.speed; readFontSizeValue.textContent = s.fontSize; readLineHeightValue.textContent = s.lineHeight; readTextWidthValue.textContent = s.textWidthCh; engine.setSpeed(s.speed); }
+
+                function updateSpacers() {
+                    const h = Math.round(readContainer.clientHeight / 2);
+                    const ts = document.getElementById('topSpacer');
+                    const bs = document.getElementById('bottomSpacer');
+                    if (ts) ts.style.height = `${h}px`;
+                    if (bs) bs.style.height = `${h}px`;
+                }
+
+                function startReading() {
+                    const s = getState();
+                    ended = false;
+                    render(); hydrateControls(); updateSpacers();
+                    // Start with the first line near the bottom of the screen
+                    const firstPara = readContent.querySelector('p');
+                    if (firstPara) {
+                        const linePx = (() => {
+                            const cs = getComputedStyle(firstPara);
+                            // Prefer computed line-height; fallback to font-size * state LH
+                            const lh = parseFloat(cs.lineHeight);
+                            if (!isNaN(lh) && lh > 0) return lh;
+                            const fs = parseFloat(cs.fontSize);
+                            const sLH = getState().lineHeight;
+                            return (isNaN(fs) ? 56 : fs) * (isNaN(sLH) ? 1.4 : sLH);
+                        })();
+                        // Desired: first line bottom aligns near viewport bottom
+                        const desired = Math.max(0, firstPara.offsetTop - (readContainer.clientHeight - linePx));
+                        readContainer.scrollTop = desired;
+                    } else {
+                        readContainer.scrollTop = 0;
+                    }
+                    btnPauseResume.textContent = s.speed > 0 ? 'Pause' : 'Resume';
+                    engine.stop(); attachOnEnd(); engine.setSpeed(s.speed); engine.start(); if (s.speed === 0) engine.pause();
+                    showOverlay();
+                }
+
+                btnPauseResume.addEventListener('click', () => {
+                    if (ended || !engine.running) { startReading(); return; }
+                    if (engine.paused) { engine.resume(); btnPauseResume.textContent = 'Pause'; } else { engine.pause(); btnPauseResume.textContent = 'Resume'; }
+                    showOverlay();
+                });
+                btnRestart.addEventListener('click', () => { startReading(); });
+                btnStop.addEventListener('click', () => { engine.stop(); switchToSetup(); });
+                btnFullscreen.addEventListener('click', async () => { try { if (!document.fullscreenElement) { await readingScreen.requestFullscreen(); } else { await document.exitFullscreen(); } } catch (e) { console.warn('Fullscreen failed', e); } showOverlay(); });
+
+                readSpeed.addEventListener('input', () => { const val = Number(readSpeed.value); engine.setSpeed(val); setState({ speed: val }); readSpeedValue.textContent = val; if (!ended && engine.running) { btnPauseResume.textContent = (engine.paused || val === 0) ? 'Resume' : 'Pause'; } showOverlay(); });
+                readFontSize.addEventListener('input', () => { const val = Number(readFontSize.value); setState({ fontSize: val }); readFontSizeValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
+                readLineHeight.addEventListener('input', () => { const val = Number(readLineHeight.value); setState({ lineHeight: val }); readLineHeightValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
+                readTextWidth.addEventListener('input', () => { const val = Number(readTextWidth.value); setState({ textWidthCh: val }); readTextWidthValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
+
+                function onKey(e) {
+                    const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT' || tag === 'TEXTAREA') return; switch (e.key) {
+                        case ' ': e.preventDefault(); btnPauseResume.click(); break;
+                        case 'r': case 'R': e.preventDefault(); btnRestart.click(); break;
+                        case 'f': case 'F': e.preventDefault(); btnFullscreen.click(); break;
+                        case 's': case 'S': e.preventDefault(); btnStop.click(); break;
+                        case 'ArrowUp': case 'W': case 'w': e.preventDefault(); readContainer.scrollTop = Math.max(0, readContainer.scrollTop - 20); showOverlay(); break;
+                        case 'ArrowDown': case 'S': case 's': e.preventDefault(); readContainer.scrollTop += 20; showOverlay(); break;
+                        case '+': case '=': adjustSpeed(+5); break;
+                        case '-': case '_': adjustSpeed(-5); break;
+                    }
+                }
+                function adjustSpeed(delta) { let v = Number(readSpeed.value) + delta; v = Math.max(0, Math.min(100, v)); readSpeed.value = v; readSpeedValue.textContent = v; engine.setSpeed(v); setState({ speed: v }); showOverlay(); }
+
+                let dragActive = false; let lastY = 0;
+                function onPointerDown(e) {
+                    // left mouse or touch/pen only
+                    if (e.button !== 0 && e.pointerType === 'mouse') return;
+                    dragActive = true;
+                    lastY = e.clientY;
+                    readContainer.setPointerCapture?.(e.pointerId);
+                    readContainer.classList.add('cursor-grabbing');
+                    showOverlay();
+                }
+                function onPointerMove(e) { if (!dragActive) return; const dy = e.clientY - lastY; lastY = e.clientY; readContainer.scrollTop -= dy; }
+                function onPointerUp(e) { dragActive = false; readContainer.releasePointerCapture?.(e.pointerId); readContainer.classList.remove('cursor-grabbing'); }
+
+                // Keep overlay visible while interacting with it
+                overlay.addEventListener('mouseenter', () => { if (overlayHideTimer) clearTimeout(overlayHideTimer); });
+                overlay.addEventListener('focusin', () => { if (overlayHideTimer) clearTimeout(overlayHideTimer); });
+                overlay.addEventListener('mouseleave', showOverlay);
+                overlay.addEventListener('focusout', showOverlay);
+
+                // Show overlay on any pointer movement (mouse/touch/pen)
+                readingScreen.addEventListener('pointermove', showOverlay);
+                // Bind drag only on the scrollable container so overlay clicks are not hijacked
+                readContainer.addEventListener('pointerdown', onPointerDown);
+                readContainer.addEventListener('pointermove', onPointerMove);
+                readContainer.addEventListener('pointerup', onPointerUp);
+                readingScreen.addEventListener('wheel', showOverlay, { passive: true });
+                window.addEventListener('resize', () => { updateSpacers(); });
+                document.addEventListener('keydown', onKey);
+
+                return { startReading, stop() { engine.stop(); document.removeEventListener('keydown', onKey); } };
+            }
+            window.__initReadingUI__ = initReadingUI;
+        })();
+
+        // ===== app.js =====
+        ; (function () {
+            const store = window.__createState__();
+            const setupScreen = document.getElementById('setupScreen');
+            const readingScreen = document.getElementById('readingScreen');
+            const app = {
+                getState: () => store.get(),
+                setState: (patch) => store.set(patch),
+                switchToReading: () => switchScreen('reading'),
+                switchToSetup: () => switchScreen('setup'),
+            };
+            window.__initSetupUI__(app);
+            const readingUI = window.__initReadingUI__(app);
+            function switchScreen(target) {
+                if (target === 'reading') {
+                    setupScreen.classList.add('hidden');
+                    readingScreen.classList.remove('hidden');
+                    readingUI.startReading();
+                } else {
+                    readingUI.stop?.();
+                    readingScreen.classList.add('hidden');
+                    setupScreen.classList.remove('hidden');
+                }
+            }
+            document.getElementById('aboutLink')?.addEventListener('click', (e) => { e.preventDefault(); document.getElementById('aboutModal').classList.remove('hidden'); });
+            document.getElementById('closeAbout')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('aboutModal').classList.add('hidden'); });
+            document.getElementById('aboutModal')?.addEventListener('click', (e) => { if (e.target.id === 'aboutModal') document.getElementById('aboutModal').classList.add('hidden'); });
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !document.getElementById('aboutModal').classList.contains('hidden')) { document.getElementById('aboutModal').classList.add('hidden'); } });
+        })();
+    </script>
+</body>
+
+</html>
