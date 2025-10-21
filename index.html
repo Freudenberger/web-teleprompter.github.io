@@ -64,6 +64,121 @@
             color: #92400e !important;
             border-color: #92400e !important;
         }
+
+        .vampire {
+            background-color: #000 !important;
+            color: #ff0000 !important;
+        }
+
+        .vampire * {
+            background-color: #000 !important;
+            color: #ff0000 !important;
+            border-color: #ff0000 !important;
+        }
+
+        .dark select {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+
+        .dark select option {
+            background-color: #000 !important;
+            color: #fff !important;
+        }
+
+        .vampire select {
+            background-color: #000 !important;
+            color: #ff0000 !important;
+        }
+
+        .vampire select option {
+            background-color: #000 !important;
+            color: #ff0000 !important;
+        }
+
+        .cyberpunk {
+            background-color: #000 !important;
+            color: #00ff00 !important;
+        }
+
+        .cyberpunk * {
+            background-color: #000 !important;
+            color: #00ff00 !important;
+            border-color: #00ff00 !important;
+        }
+
+        .cyberpunk select {
+            background-color: #000 !important;
+            color: #00ff00 !important;
+        }
+
+        .cyberpunk select option {
+            background-color: #000 !important;
+            color: #00ff00 !important;
+        }
+
+        .neon-blue {
+            background-color: #000 !important;
+            color: #00bfff !important;
+        }
+
+        .neon-blue * {
+            background-color: #000 !important;
+            color: #00bfff !important;
+            border-color: #00bfff !important;
+        }
+
+        .neon-blue select {
+            background-color: #000 !important;
+            color: #00bfff !important;
+        }
+
+        .neon-blue select option {
+            background-color: #000 !important;
+            color: #00bfff !important;
+        }
+
+        .sunset {
+            background-color: #000 !important;
+            color: #ff8c00 !important;
+        }
+
+        .sunset * {
+            background-color: #000 !important;
+            color: #ff8c00 !important;
+            border-color: #ff8c00 !important;
+        }
+
+        .sunset select {
+            background-color: #000 !important;
+            color: #ff8c00 !important;
+        }
+
+        .sunset select option {
+            background-color: #000 !important;
+            color: #ff8c00 !important;
+        }
+
+        .dusk {
+            background-color: #000 !important;
+            color: #9370db !important;
+        }
+
+        .dusk * {
+            background-color: #000 !important;
+            color: #9370db !important;
+            border-color: #9370db !important;
+        }
+
+        .dusk select {
+            background-color: #000 !important;
+            color: #9370db !important;
+        }
+
+        .dusk select option {
+            background-color: #000 !important;
+            color: #9370db !important;
+        }
     </style>
 </head>
 
@@ -135,10 +250,24 @@
                             <div class="flex items-center justify-between">
                                 <label class="text-sm">Theme</label>
                                 <select id="themeSelect" class="rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 px-2 py-1 text-sm">
-                                    <option value="dark">Dark</option>
+                                    <option value="dark">Dark (default)</option>
                                     <option value="light">Light</option>
                                     <option value="sepia">Sepia</option>
                                     <option value="high-contrast">High Contrast</option>
+                                    <option value="vampire">Vampire</option>
+                                    <option value="cyberpunk">Cyberpunk</option>
+                                    <option value="neon-blue">Neon Blue</option>
+                                    <option value="sunset">Sunset</option>
+                                    <option value="dusk">Dusk</option>
+                                </select>
+                            </div>
+                            <!-- Font family -->
+                            <div class="flex items-center justify-between">
+                                <label class="text-sm">Font</label>
+                                <select id="fontSelect" class="rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 px-2 py-1 text-sm">
+                                    <option value="sans-serif">Sans Serif (default)</option>
+                                    <option value="monospace">Monospace</option>
+                                    <option value="serif">Serif</option>
                                 </select>
                             </div>
                             <div class="mt-3 flex justify-center sm:justify-end">
@@ -178,6 +307,28 @@
                         <div class="flex items-center justify-between gap-2">
                             <label for="readTextWidth" class="text-sm font-medium">Width <span id="readTextWidthValue">70</span>ch</label>
                             <input id="readTextWidth" type="range" min="40" max="150" class="w-32 h-8 sm:w-16 md:w-20 lg:w-24" />
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="readTheme" class="text-sm font-medium">Theme</label>
+                            <select id="readTheme" class="w-32 h-8 sm:w-20 md:w-32 rounded border border-white/20 bg-black/50 text-white px-1 py-0 text-sm">
+                                <option value="dark">Dark (default)</option>
+                                <option value="light">Light</option>
+                                <option value="sepia">Sepia</option>
+                                <option value="high-contrast">High Contrast</option>
+                                <option value="vampire">Vampire</option>
+                                <option value="cyberpunk">Cyberpunk</option>
+                                <option value="neon-blue">Neon Blue</option>
+                                <option value="sunset">Sunset</option>
+                                <option value="dusk">Dusk</option>
+                            </select>
+                        </div>
+                        <div class="flex items-center justify-between gap-2">
+                            <label for="readFont" class="text-sm font-medium">Font</label>
+                            <select id="readFont" class="w-32 h-8 sm:w-20 md:w-32 rounded border border-white/20 bg-black/50 text-white px-1 py-0 text-sm">
+                                <option value="sans-serif">Sans (default)</option>
+                                <option value="monospace">Mono</option>
+                                <option value="serif">Serif</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -242,6 +393,7 @@
                 lineHeight: 1.4,
                 textWidthCh: 70,
                 theme: 'dark',
+                fontFamily: 'sans-serif',
             };
             function loadState() {
                 try {
@@ -319,6 +471,7 @@
                 const speed = document.getElementById('speed');
                 const textWidth = document.getElementById('textWidth');
                 const themeSelect = document.getElementById('themeSelect');
+                const fontSelect = document.getElementById('fontSelect');
                 const fontSizeValue = document.getElementById('fontSizeValue');
                 const lineHeightValue = document.getElementById('lineHeightValue');
                 const speedValue = document.getElementById('speedValue');
@@ -342,6 +495,7 @@
                 scriptInput.value = s.scriptText || '';
                 fontSize.value = s.fontSize; lineHeight.value = s.lineHeight; speed.value = s.speed; textWidth.value = s.textWidthCh;
                 themeSelect.value = s.theme;
+                fontSelect.value = s.fontFamily;
                 fontSizeValue.textContent = s.fontSize; lineHeightValue.textContent = s.lineHeight; speedValue.textContent = s.speed; textWidthValue.textContent = s.textWidthCh;
                 applyTheme(s.theme);
 
@@ -367,6 +521,11 @@
                     setState({ theme });
                 });
 
+                fontSelect.addEventListener('change', () => {
+                    const fontFamily = fontSelect.value;
+                    setState({ fontFamily });
+                });
+
                 btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; setState({ scriptText: '' }); });
 
                 btnSample.addEventListener('click', () => {
@@ -388,7 +547,7 @@
                     // Preserve existing script text
                     const preservedScript = scriptInput.value;
                     // Update inputs
-                    fontSize.value = d.fontSize; lineHeight.value = d.lineHeight; speed.value = d.speed; textWidth.value = d.textWidthCh; themeSelect.value = d.theme;
+                    fontSize.value = d.fontSize; lineHeight.value = d.lineHeight; speed.value = d.speed; textWidth.value = d.textWidthCh; themeSelect.value = d.theme; fontSelect.value = d.fontFamily;
                     fontSizeValue.textContent = d.fontSize; lineHeightValue.textContent = d.lineHeight; speedValue.textContent = d.speed; textWidthValue.textContent = d.textWidthCh;
                     applyTheme(d.theme);
                     setState({
@@ -398,14 +557,20 @@
                         speed: d.speed,
                         textWidthCh: d.textWidthCh,
                         theme: d.theme,
+                        fontFamily: d.fontFamily,
                     });
                 });
 
                 function applyTheme(theme) {
-                    document.documentElement.classList.remove('dark', 'sepia', 'high-contrast');
+                    document.documentElement.classList.remove('dark', 'sepia', 'high-contrast', 'vampire', 'cyberpunk', 'neon-blue', 'sunset', 'dusk');
                     if (theme === 'dark') document.documentElement.classList.add('dark');
                     else if (theme === 'sepia') document.documentElement.classList.add('sepia');
                     else if (theme === 'high-contrast') document.documentElement.classList.add('high-contrast');
+                    else if (theme === 'vampire') document.documentElement.classList.add('vampire');
+                    else if (theme === 'cyberpunk') document.documentElement.classList.add('cyberpunk');
+                    else if (theme === 'neon-blue') document.documentElement.classList.add('neon-blue');
+                    else if (theme === 'sunset') document.documentElement.classList.add('sunset');
+                    else if (theme === 'dusk') document.documentElement.classList.add('dusk');
                     // light is default, no class
                 }
                 window.applyTheme = applyTheme;
@@ -430,6 +595,8 @@
                 const readFontSize = document.getElementById('readFontSize');
                 const readLineHeight = document.getElementById('readLineHeight');
                 const readTextWidth = document.getElementById('readTextWidth');
+                const readTheme = document.getElementById('readTheme');
+                const readFont = document.getElementById('readFont');
                 const readSpeedValue = document.getElementById('readSpeedValue');
                 const readFontSizeValue = document.getElementById('readFontSizeValue');
                 const readLineHeightValue = document.getElementById('readLineHeightValue');
@@ -464,6 +631,7 @@
                     const lh = s.lineHeight;
                     const container = document.createElement('div');
                     container.style.fontSize = fontSizePx; container.style.lineHeight = String(lh);
+                    container.style.fontFamily = s.fontFamily;
                     container.className = 'mx-auto text-center no-select';
                     // center text
                     container.style.textAlign = 'center';
@@ -490,7 +658,7 @@
                     wrapper.appendChild(container); readContent.appendChild(wrapper); endIndicator.classList.add('hidden');
                 }
                 function splitParagraphs(text) { return text.replace(/\r\n/g, '\n').split(/\n\s*\n|\n/g).map(s => s.trim()).filter(Boolean); }
-                function hydrateControls() { const s = getState(); readSpeed.value = s.speed; readFontSize.value = s.fontSize; readLineHeight.value = s.lineHeight; readTextWidth.value = s.textWidthCh; readSpeedValue.textContent = s.speed; readFontSizeValue.textContent = s.fontSize; readLineHeightValue.textContent = s.lineHeight; readTextWidthValue.textContent = s.textWidthCh; engine.setSpeed(s.speed); }
+                function hydrateControls() { const s = getState(); readSpeed.value = s.speed; readFontSize.value = s.fontSize; readLineHeight.value = s.lineHeight; readTextWidth.value = s.textWidthCh; readTheme.value = s.theme; readFont.value = s.fontFamily; readSpeedValue.textContent = s.speed; readFontSizeValue.textContent = s.fontSize; readLineHeightValue.textContent = s.lineHeight; readTextWidthValue.textContent = s.textWidthCh; engine.setSpeed(s.speed); }
 
                 function updateSpacers() {
                     const h = Math.round(readContainer.clientHeight / 2);
@@ -540,6 +708,8 @@
                 readFontSize.addEventListener('input', () => { const val = Number(readFontSize.value); setState({ fontSize: val }); readFontSizeValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
                 readLineHeight.addEventListener('input', () => { const val = Number(readLineHeight.value); setState({ lineHeight: val }); readLineHeightValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
                 readTextWidth.addEventListener('input', () => { const val = Number(readTextWidth.value); setState({ textWidthCh: val }); readTextWidthValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
+                readTheme.addEventListener('change', () => { const theme = readTheme.value; applyTheme(theme); setState({ theme }); showOverlay(); });
+                readFont.addEventListener('change', () => { const fontFamily = readFont.value; setState({ fontFamily }); const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
 
                 function onKey(e) {
                     const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT' || tag === 'TEXTAREA') return; switch (e.key) {
