@@ -6,11 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Web Teleprompter</title>
     <meta name="description" content="Simple, offline-capable web teleprompter" />
+    <!-- Tailwind (local copy) -->
+    <script src="css/tailwind-3.4.17.css"></script>
     <!-- Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    
     <script>
         // Tailwind config: enable dark mode via class
-        tailwind.config = {
+        // Ensure `tailwind` exists on window so this config is applied
+        // when the local Tailwind runtime script executes.
+        window.tailwind = window.tailwind || {};
+        window.tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
