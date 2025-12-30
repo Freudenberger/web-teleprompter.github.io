@@ -10,7 +10,7 @@
     <script src="css/tailwind-3.4.17.css"></script>
     <!-- Tailwind CSS via CDN -->
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
-    
+
     <script>
         // Tailwind config: enable dark mode via class
         // Ensure `tailwind` exists on window so this config is applied
@@ -201,7 +201,7 @@
         <!-- Main -->
         <main id="main" class="flex-1 flex flex-col">
             <!-- Setup Screen -->
-            <section id="setupScreen" class="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
+            <section id="setupScreen" class="relative flex-1 grid grid-cols-1 lg:grid-cols-2 gap-4 p-4">
                 <div class="flex flex-col min-h-0">
                     <label for="scriptInput" class="mb-2 text-sm font-medium">Script</label>
                     <textarea id="scriptInput" class="flex-1 w-full min-h-48 sm:min-h-0 resize-none rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 p-2 sm:p-3 font-mono text-sm" placeholder="Paste or type your script here…"></textarea>
@@ -352,8 +352,12 @@
         </main>
 
         <!-- Footer (optional) -->
-        <footer class="px-4 py-2 text-xs text-gray-500 border-t border-gray-200 dark:border-white/10">
-            Offline, client-side only. No data leaves your browser. Copyright &copy; 2025 by <a href="https://github.com/Freudenberger" class="underline">Freudenberger</a>
+        <footer class="px-4 py-2 text-xs text-gray-500 border-t border-gray-200 dark:border-white/10 flex justify-between items-center ">
+            <span>Offline, client-side only. No data leaves your browser. Copyright &copy; 2025 by <a href="https://github.com/Freudenberger" class="underline">Freudenberger</a></span>
+            <span style="display: flex; justify-content: flex-end; flex-direction: row;">
+                <span id="setupDuration" class=" bottom-4 right-4 z-30 text-xs bg-black/60 text-white px-2 py-1 rounded">Est: --:--</span>
+                <span id="readDuration" class=" bottom-4 right-4 z-30 text-xs bg-black/60 text-white px-2 py-1 rounded">Remaining: --:--</span>
+            </span>
         </footer>
     </div>
 
@@ -462,6 +466,95 @@
             window.__ScrollEngine__ = ScrollEngine;
         })();
 
+        (function () {
+            const MAX_PX_PER_SEC = 300;
+            function formatDuration(sec) {
+                if (sec == null || !isFinite(sec)) return 'N/A';
+                sec = Math.max(0, Math.round(sec));
+                const h = Math.floor(sec / 3600);
+                const m = Math.floor((sec % 3600) / 60);
+                const s = sec % 60;
+                if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            }
+            function splitParagraphs(text) { return text.replace(/\r\n/g, '\n').split(/\n\s*\n|\n/g).map(s => s.trim()).filter(Boolean); }
+            function estimateRunTimeSeconds(state, viewportHeight) {
+                if (!state || !state.scriptText) return 0;
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'absolute';
+                wrapper.style.left = '-9999px';
+                wrapper.style.top = '0';
+                wrapper.style.width = `${state.textWidthCh}ch`;
+                wrapper.style.maxWidth = '100%';
+                wrapper.className = 'prose leading-normal';
+                wrapper.style.textAlign = 'center';
+                wrapper.style.padding = '0';
+                const container = document.createElement('div');
+                container.className = 'mx-auto text-center no-select';
+                container.style.fontSize = `${state.fontSize}px`;
+                container.style.lineHeight = String(state.lineHeight);
+                container.style.fontFamily = state.fontFamily || 'sans-serif';
+                const top = document.createElement('div'); top.style.height = `${Math.round(viewportHeight / 2)}px`; container.appendChild(top);
+                const paras = splitParagraphs(state.scriptText);
+                for (let i = 0; i < paras.length; i++) {
+                    const p = document.createElement('p');
+                    p.textContent = paras[i];
+                    p.className = i === 0 ? 'mt-0 mb-6' : 'my-6';
+                    container.appendChild(p);
+                }
+                const bottom = document.createElement('div'); bottom.style.height = `${Math.round(viewportHeight / 2)}px`; container.appendChild(bottom);
+                wrapper.appendChild(container);
+                // Determine the best host for measurement. If the real `#readContent` is visible,
+                // use it so padding and layout match reading mode exactly. Otherwise, create a
+                // temporary off-screen host that copies relevant paddings so measurements remain
+                // consistent even while the reading screen is hidden.
+                const readContentEl = document.getElementById('readContent');
+                const isReadContentVisible = readContentEl && readContentEl.clientHeight > 0 && window.getComputedStyle(readContentEl).display !== 'none';
+                let parentEl = null;
+                let tempHost = null;
+                if (isReadContentVisible) {
+                    parentEl = readContentEl;
+                } else {
+                    tempHost = document.createElement('div');
+                    // Copy padding from readContent when available so vertical spacing matches (py-16)
+                    if (readContentEl) {
+                        const rcComputed = window.getComputedStyle(readContentEl);
+                        tempHost.style.paddingTop = rcComputed.paddingTop;
+                        tempHost.style.paddingBottom = rcComputed.paddingBottom;
+                        tempHost.style.paddingLeft = rcComputed.paddingLeft;
+                        tempHost.style.paddingRight = rcComputed.paddingRight;
+                    } else {
+                        // fallback padding similar to `py-16`
+                        tempHost.style.padding = '4rem 0';
+                    }
+                    tempHost.style.position = 'absolute';
+                    tempHost.style.left = '-9999px';
+                    tempHost.style.top = '0';
+                    tempHost.style.width = '100%';
+                    document.body.appendChild(tempHost);
+                    parentEl = tempHost;
+                }
+                parentEl.appendChild(wrapper);
+                const firstPara = wrapper.querySelector('p');
+                const computed = window.getComputedStyle(firstPara || container);
+                let linePx = parseFloat(computed.lineHeight);
+                if (isNaN(linePx) || linePx <= 0) {
+                    const fs = parseFloat(computed.fontSize) || state.fontSize || 56;
+                    linePx = fs * (state.lineHeight || 1.4);
+                }
+                const initial = firstPara ? Math.max(0, firstPara.offsetTop - (viewportHeight - linePx)) : 0;
+                const totalDistance = wrapper.scrollHeight - viewportHeight - initial;
+                parentEl.removeChild(wrapper);
+                if (tempHost) document.body.removeChild(tempHost);
+                if (!isFinite(totalDistance) || totalDistance <= 0) return 0;
+                const pxPerSec = (state.speed / 100) * MAX_PX_PER_SEC;
+                if (!pxPerSec || pxPerSec <= 0) return null;
+                return totalDistance / pxPerSec;
+            }
+            window.__formatDuration__ = formatDuration;
+            window.__estimateRunTimeSeconds__ = estimateRunTimeSeconds;
+        })();
+
         // ===== ui-setup.js =====
         ; (function () {
             function initSetupUI(app) {
@@ -515,11 +608,11 @@
                     textWidthCh: Number(textWidth.value),
                 }), 200);
 
-                scriptInput.addEventListener('input', () => { btnStart.disabled = !scriptInput.value.trim(); persist(); });
-                fontSize.addEventListener('input', () => { fontSizeValue.textContent = fontSize.value; persist(); });
-                lineHeight.addEventListener('input', () => { lineHeightValue.textContent = lineHeight.value; persist(); });
-                speed.addEventListener('input', () => { speedValue.textContent = speed.value; persist(); });
-                textWidth.addEventListener('input', () => { textWidthValue.textContent = textWidth.value; persist(); });
+                scriptInput.addEventListener('input', () => { btnStart.disabled = !scriptInput.value.trim(); persist(); updateSetupDuration(); });
+                fontSize.addEventListener('input', () => { fontSizeValue.textContent = fontSize.value; persist(); updateSetupDuration(); });
+                lineHeight.addEventListener('input', () => { lineHeightValue.textContent = lineHeight.value; persist(); updateSetupDuration(); });
+                speed.addEventListener('input', () => { speedValue.textContent = speed.value; persist(); updateSetupDuration(); });
+                textWidth.addEventListener('input', () => { textWidthValue.textContent = textWidth.value; persist(); updateSetupDuration(); });
 
                 themeSelect.addEventListener('change', () => {
                     const theme = themeSelect.value;
@@ -532,17 +625,17 @@
                     setState({ fontFamily });
                 });
 
-                btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; setState({ scriptText: '' }); });
+                btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; setState({ scriptText: '' }); updateSetupDuration(); });
 
                 btnSample.addEventListener('click', () => {
                     const sample = `This is a sample teleprompter script.\n\nUse the speed slider to control auto-scroll.\nPress Space to pause/resume. F to toggle fullscreen. S to stop.\n\nDrag with mouse or finger to scroll manually.\nAdjust font size and line height to your liking.`;
-                    scriptInput.value = sample; btnStart.disabled = false; setState({ scriptText: sample });
+                    scriptInput.value = sample; btnStart.disabled = false; setState({ scriptText: sample }); updateSetupDuration();
                 });
 
                 btnSample2.addEventListener('click', () => {
                     // add Polish text as second sample
                     const sample2 = `Witaj w aplikacji Web Teleprompter.\n\nTo jest inny przykładowy skrypt, który ma na celu zademonstrowanie funkcjonalności telepromptera.\nCzuj się swobodnie, modyfikuj tekst,\ndostosuj ustawienia\ni po prostu\nzaczynać czytać!\n\nUdanej prezentacji!`;
-                    scriptInput.value = sample2; btnStart.disabled = false; setState({ scriptText: sample2 });
+                    scriptInput.value = sample2; btnStart.disabled = false; setState({ scriptText: sample2 }); updateSetupDuration();
                 });
 
                 btnStart.addEventListener('click', () => { if (!scriptInput.value.trim()) return; switchToReading(); });
@@ -565,7 +658,31 @@
                         theme: d.theme,
                         fontFamily: d.fontFamily,
                     });
+                    updateSetupDuration();
                 });
+
+                function updateSetupDuration() {
+                    const el = document.getElementById('setupDuration');
+                    if (!el) return;
+                    const s = {
+                        scriptText: scriptInput.value,
+                        speed: Number(speed.value),
+                        fontSize: Number(fontSize.value),
+                        lineHeight: Number(lineHeight.value),
+                        textWidthCh: Number(textWidth.value),
+                        fontFamily: fontSelect.value,
+                    };
+                    // Prefer the real read container height so Est matches Remaining exactly during reading mode.
+                    const readContainerEl = document.getElementById('readContainer');
+                    const viewportHeight = (readContainerEl && readContainerEl.clientHeight > 0)
+                        ? readContainerEl.clientHeight
+                        : Math.max(200, window.innerHeight - (document.querySelector('header')?.offsetHeight || 0) - (document.querySelector('footer')?.offsetHeight || 0) - 120);
+                    const secs = window.__estimateRunTimeSeconds__(s, viewportHeight);
+                    el.textContent = secs === null ? 'Est: N/A' : `Est: ${window.__formatDuration__(Math.round(secs))}`;
+                }
+
+                // initialize duration display
+                updateSetupDuration();
 
                 function applyTheme(theme) {
                     document.documentElement.classList.remove('dark', 'sepia', 'high-contrast', 'vampire', 'cyberpunk', 'neon-blue', 'sunset', 'dusk');
@@ -609,6 +726,8 @@
                 const readTextWidthValue = document.getElementById('readTextWidthValue');
 
                 const engine = new window.__ScrollEngine__({ container: readContainer });
+                const readDurationEl = document.getElementById('readDuration');
+                let durationInterval = null;
                 let ended = false;
                 function attachOnEnd() {
                     engine.onEnd = () => {
@@ -616,10 +735,20 @@
                         btnPauseResume.textContent = 'Restart';
                         engine.stop();
                         endIndicator.classList.remove('hidden');
+                        updateReadDuration();
                         showOverlay();
                     };
                 }
                 attachOnEnd();
+
+                function updateReadDuration() {
+                    if (!readDurationEl) return;
+                    const pxPerSec = engine.pxPerSec || 0;
+                    if (!pxPerSec) { readDurationEl.textContent = 'Remaining: N/A'; return; }
+                    const remainingPx = Math.max(0, readContainer.scrollHeight - readContainer.clientHeight - readContainer.scrollTop);
+                    const secs = remainingPx / pxPerSec;
+                    readDurationEl.textContent = `Remaining: ${window.__formatDuration__(Math.round(secs))}`;
+                }
 
                 let overlayHideTimer = null; const OVERLAY_HIDE_MS = 2000;
                 function showOverlay() { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); if (overlayHideTimer) clearTimeout(overlayHideTimer); overlayHideTimer = setTimeout(() => { overlay.classList.remove('opacity-100'); overlay.classList.add('opacity-0'); }, OVERLAY_HIDE_MS); }
@@ -698,24 +827,32 @@
                     }
                     btnPauseResume.textContent = s.speed > 0 ? 'Pause' : 'Resume';
                     engine.stop(); attachOnEnd(); engine.setSpeed(s.speed); engine.start(); if (s.speed === 0) engine.pause();
+                    // update remaining duration display and start live updates
+                    updateReadDuration();
+                    if (durationInterval) clearInterval(durationInterval);
+                    durationInterval = setInterval(updateReadDuration, 500);
                     showOverlay();
                 }
 
                 btnPauseResume.addEventListener('click', () => {
                     if (ended || !engine.running) { startReading(); return; }
                     if (engine.paused) { engine.resume(); btnPauseResume.textContent = 'Pause'; } else { engine.pause(); btnPauseResume.textContent = 'Resume'; }
+                    updateReadDuration();
                     showOverlay();
                 });
                 btnRestart.addEventListener('click', () => { startReading(); });
-                btnStop.addEventListener('click', () => { engine.stop(); switchToSetup(); });
+                btnStop.addEventListener('click', () => { engine.stop(); if (durationInterval) { clearInterval(durationInterval); durationInterval = null; } switchToSetup(); });
                 btnFullscreen.addEventListener('click', async () => { try { if (!document.fullscreenElement) { await readingScreen.requestFullscreen(); } else { await document.exitFullscreen(); } } catch (e) { console.warn('Fullscreen failed', e); } showOverlay(); });
 
-                readSpeed.addEventListener('input', () => { const val = Number(readSpeed.value); engine.setSpeed(val); setState({ speed: val }); readSpeedValue.textContent = val; if (!ended && engine.running) { btnPauseResume.textContent = (engine.paused || val === 0) ? 'Resume' : 'Pause'; } showOverlay(); });
-                readFontSize.addEventListener('input', () => { const val = Number(readFontSize.value); setState({ fontSize: val }); readFontSizeValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
-                readLineHeight.addEventListener('input', () => { const val = Number(readLineHeight.value); setState({ lineHeight: val }); readLineHeightValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
-                readTextWidth.addEventListener('input', () => { const val = Number(readTextWidth.value); setState({ textWidthCh: val }); readTextWidthValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
-                readTheme.addEventListener('change', () => { const theme = readTheme.value; applyTheme(theme); setState({ theme }); showOverlay(); });
-                readFont.addEventListener('change', () => { const fontFamily = readFont.value; setState({ fontFamily }); const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); showOverlay(); });
+                readSpeed.addEventListener('input', () => { const val = Number(readSpeed.value); engine.setSpeed(val); setState({ speed: val }); readSpeedValue.textContent = val; if (!ended && engine.running) { btnPauseResume.textContent = (engine.paused || val === 0) ? 'Resume' : 'Pause'; } updateReadDuration(); showOverlay(); });
+                readFontSize.addEventListener('input', () => { const val = Number(readFontSize.value); setState({ fontSize: val }); readFontSizeValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); updateReadDuration(); showOverlay(); });
+                readLineHeight.addEventListener('input', () => { const val = Number(readLineHeight.value); setState({ lineHeight: val }); readLineHeightValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); updateReadDuration(); showOverlay(); });
+                readTextWidth.addEventListener('input', () => { const val = Number(readTextWidth.value); setState({ textWidthCh: val }); readTextWidthValue.textContent = val; const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); updateReadDuration(); showOverlay(); });
+                readTheme.addEventListener('change', () => { const theme = readTheme.value; applyTheme(theme); setState({ theme }); updateReadDuration(); showOverlay(); });
+                readFont.addEventListener('change', () => { const fontFamily = readFont.value; setState({ fontFamily }); const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); updateReadDuration(); showOverlay(); });
+
+                // update remaining time when user scrolls manually
+                readContainer.addEventListener('scroll', () => { updateReadDuration(); });
 
                 function onKey(e) {
                     const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT' || tag === 'TEXTAREA') return; switch (e.key) {
@@ -760,7 +897,7 @@
                 window.addEventListener('resize', () => { updateSpacers(); });
                 document.addEventListener('keydown', onKey);
 
-                return { startReading, stop() { engine.stop(); document.removeEventListener('keydown', onKey); } };
+                return { startReading, stop() { engine.stop(); document.removeEventListener('keydown', onKey); if (durationInterval) { clearInterval(durationInterval); durationInterval = null; } } };
             }
             window.__initReadingUI__ = initReadingUI;
         })();
