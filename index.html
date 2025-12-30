@@ -549,7 +549,7 @@
                 if (!isFinite(totalDistance) || totalDistance <= 0) return 0;
                 const pxPerSec = (state.speed / 100) * MAX_PX_PER_SEC;
                 if (!pxPerSec || pxPerSec <= 0) return null;
-                return totalDistance / pxPerSec;
+                return (totalDistance / pxPerSec) * 1.05; // add 20% buffer for pauses, delays, etc.
             }
             window.__formatDuration__ = formatDuration;
             window.__estimateRunTimeSeconds__ = estimateRunTimeSeconds;
