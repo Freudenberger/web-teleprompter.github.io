@@ -852,7 +852,32 @@
                 readFont.addEventListener('change', () => { const fontFamily = readFont.value; setState({ fontFamily }); const topBefore = readContainer.scrollTop; render(); readContainer.scrollTop = topBefore; updateSpacers(); updateReadDuration(); showOverlay(); });
 
                 // update remaining time when user scrolls manually
-                readContainer.addEventListener('scroll', () => { updateReadDuration(); });
+                readContainer.addEventListener('scroll', () => {
+                    updateReadDuration();
+                    // If we already reached the end but the user scrolls away, treat script as ongoing again.
+                    if (ended && !engine.atEnd()) {
+                        ended = false;
+                        endIndicator.classList.add('hidden');
+                        attachOnEnd();
+                        // restart engine so auto-scroll continues (respect speed=0)
+                        if (!engine.running) {
+                            engine.start();
+                            if (getState().speed === 0) engine.pause();
+                        }
+                        btnPauseResume.textContent = (engine.paused || getState().speed === 0) ? 'Resume' : 'Pause';
+                        showOverlay();
+                        return;
+                    }
+                    // If we are not ended but user scrolled to the end manually, trigger end behavior.
+                    if (!ended && engine.atEnd()) {
+                        ended = true;
+                        btnPauseResume.textContent = 'Restart';
+                        engine.stop();
+                        endIndicator.classList.remove('hidden');
+                        updateReadDuration();
+                        showOverlay();
+                    }
+                });
 
                 function onKey(e) {
                     const tag = (e.target && e.target.tagName) || ''; if (tag === 'INPUT' || tag === 'TEXTAREA') return; switch (e.key) {
