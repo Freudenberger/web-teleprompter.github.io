@@ -37,6 +37,27 @@
             border: 1px solid !important;
         }
 
+        /* 3-2-1 countdown overlay in reading mode */
+        #countdownOverlay {
+            position: absolute;
+            inset: 0;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.35);
+            font-weight: 800;
+            font-size: clamp(64px, 18vw, 160px);
+            letter-spacing: -0.04em;
+            text-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+            pointer-events: none;
+            /* Default hidden; will be shown when the element does NOT have the .hidden class */
+            display: none;
+        }
+        /* Ensure the overlay becomes flex only when visible (avoids ID vs .hidden specificity issues) */
+        #countdownOverlay:not(.hidden) {
+            display: flex;
+        }
+
         /* Prevent text selection during drag in reading mode */
         .no-select {
             user-select: none;
@@ -342,6 +363,9 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- 3-2-1 countdown (shown after Start/Restart) -->
+                <div id="countdownOverlay" class="hidden select-none" aria-live="polite" aria-atomic="true">3</div>
 
                 <!-- End of script indicator -->
                 <div id="endIndicator" class="hidden absolute bottom-4 inset-x-0 text-center z-20">
@@ -711,6 +735,7 @@
                 const { getState, setState, switchToSetup } = app;
                 const readingScreen = document.getElementById('readingScreen');
                 const overlay = document.getElementById('overlay');
+                const countdownOverlay = document.getElementById('countdownOverlay');
                 const btnPauseResume = document.getElementById('btnPauseResume');
                 const btnRestart = document.getElementById('btnRestart');
                 const btnStop = document.getElementById('btnStop');
@@ -733,6 +758,34 @@
                 const readDurationEl = document.getElementById('readDuration');
                 let durationInterval = null;
                 let ended = false;
+
+                // Countdown state (3..1) before auto-scroll starts.
+                const COUNTDOWN_SECONDS = 3;
+                let countdownInterval = null;
+                let countdownActive = false;
+
+                function setControlsDisabled(disabled) {
+                    // Keep Stop enabled so user can exit during countdown.
+                    btnPauseResume.disabled = disabled;
+                    btnRestart.disabled = disabled;
+                    btnFullscreen.disabled = disabled;
+                    readSpeed.disabled = disabled;
+                    readFontSize.disabled = disabled;
+                    readLineHeight.disabled = disabled;
+                    readTextWidth.disabled = disabled;
+                    readTheme.disabled = disabled;
+                    readFont.disabled = disabled;
+                }
+
+                function cancelCountdown() {
+                    countdownActive = false;
+                    if (countdownInterval) {
+                        clearInterval(countdownInterval);
+                        countdownInterval = null;
+                    }
+                    if (countdownOverlay) countdownOverlay.classList.add('hidden');
+                    setControlsDisabled(false);
+                }
                 function attachOnEnd() {
                     engine.onEnd = () => {
                         ended = true;
@@ -755,7 +808,49 @@
                 }
 
                 let overlayHideTimer = null; const OVERLAY_HIDE_MS = 2000;
-                function showOverlay() { overlay.classList.remove('opacity-0'); overlay.classList.add('opacity-100'); if (overlayHideTimer) clearTimeout(overlayHideTimer); overlayHideTimer = setTimeout(() => { overlay.classList.remove('opacity-100'); overlay.classList.add('opacity-0'); }, OVERLAY_HIDE_MS); }
+                function showOverlay(lockVisible = false) {
+                    // During countdown, always keep the overlay visible.
+                    if (countdownActive) lockVisible = true;
+                    overlay.classList.remove('opacity-0');
+                    overlay.classList.add('opacity-100');
+                    if (overlayHideTimer) clearTimeout(overlayHideTimer);
+                    if (lockVisible) return;
+                    overlayHideTimer = setTimeout(() => {
+                        overlay.classList.remove('opacity-100');
+                        overlay.classList.add('opacity-0');
+                    }, OVERLAY_HIDE_MS);
+                }
+
+                function startCountdown(seconds) {
+                    cancelCountdown();
+                    countdownActive = true;
+                    setControlsDisabled(true);
+                    showOverlay(true);
+
+                    if (!countdownOverlay) return Promise.resolve();
+                    countdownOverlay.textContent = String(seconds);
+                    countdownOverlay.classList.remove('hidden');
+
+                    return new Promise((resolve) => {
+                        let remaining = seconds;
+                        countdownInterval = setInterval(() => {
+                            if (!countdownActive) {
+                                clearInterval(countdownInterval);
+                                countdownInterval = null;
+                                resolve();
+                                return;
+                            }
+                            remaining -= 1;
+                            if (remaining <= 0) {
+                                clearInterval(countdownInterval);
+                                countdownInterval = null;
+                                resolve();
+                                return;
+                            }
+                            countdownOverlay.textContent = String(remaining);
+                        }, 1000);
+                    });
+                }
 
                 function render() {
                     const s = getState();
@@ -807,9 +902,10 @@
                     if (bs) bs.style.height = `${h}px`;
                 }
 
-                function startReading() {
+                async function startReading() {
                     const s = getState();
                     ended = false;
+                    cancelCountdown();
                     render(); hydrateControls(); updateSpacers();
                     // Start with the first line near the bottom of the screen
                     const firstPara = readContent.querySelector('p');
@@ -829,11 +925,29 @@
                     } else {
                         readContainer.scrollTop = 0;
                     }
+
+                    // Prepare engine but delay starting it until countdown completes.
                     btnPauseResume.textContent = s.speed > 0 ? 'Pause' : 'Resume';
-                    engine.stop(); attachOnEnd(); engine.setSpeed(s.speed); engine.start(); if (s.speed === 0) engine.pause();
-                    // update remaining duration display and start live updates
+                    engine.stop();
+                    attachOnEnd();
+                    engine.setSpeed(s.speed);
+
+                    // Keep remaining time updated (even during countdown, if possible)
                     updateReadDuration();
                     if (durationInterval) clearInterval(durationInterval);
+
+                    // 3-second countdown after Start/Restart
+                    await startCountdown(COUNTDOWN_SECONDS);
+                    if (!readingScreen || readingScreen.classList.contains('hidden')) return;
+                    if (!countdownActive) return;
+
+                    countdownActive = false;
+                    if (countdownOverlay) countdownOverlay.classList.add('hidden');
+                    setControlsDisabled(false);
+
+                    engine.start();
+                    if (s.speed === 0) engine.pause();
+
                     durationInterval = setInterval(updateReadDuration, 500);
                     showOverlay();
                 }
@@ -845,7 +959,12 @@
                     showOverlay();
                 });
                 btnRestart.addEventListener('click', () => { startReading(); });
-                btnStop.addEventListener('click', () => { engine.stop(); if (durationInterval) { clearInterval(durationInterval); durationInterval = null; } switchToSetup(); });
+                btnStop.addEventListener('click', () => {
+                    cancelCountdown();
+                    engine.stop();
+                    if (durationInterval) { clearInterval(durationInterval); durationInterval = null; }
+                    switchToSetup();
+                });
                 btnFullscreen.addEventListener('click', async () => { try { if (!document.fullscreenElement) { await readingScreen.requestFullscreen(); } else { await document.exitFullscreen(); } } catch (e) { console.warn('Fullscreen failed', e); } showOverlay(); });
 
                 readSpeed.addEventListener('input', () => { const val = Number(readSpeed.value); engine.setSpeed(val); setState({ speed: val }); readSpeedValue.textContent = val; if (!ended && engine.running) { btnPauseResume.textContent = (engine.paused || val === 0) ? 'Resume' : 'Pause'; } updateReadDuration(); showOverlay(); });
@@ -926,7 +1045,15 @@
                 window.addEventListener('resize', () => { updateSpacers(); });
                 document.addEventListener('keydown', onKey);
 
-                return { startReading, stop() { engine.stop(); document.removeEventListener('keydown', onKey); if (durationInterval) { clearInterval(durationInterval); durationInterval = null; } } };
+                return {
+                    startReading,
+                    stop() {
+                        cancelCountdown();
+                        engine.stop();
+                        document.removeEventListener('keydown', onKey);
+                        if (durationInterval) { clearInterval(durationInterval); durationInterval = null; }
+                    }
+                };
             }
             window.__initReadingUI__ = initReadingUI;
         })();
