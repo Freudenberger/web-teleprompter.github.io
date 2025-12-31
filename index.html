@@ -252,9 +252,9 @@
                             <div>
                                 <label class="flex justify-between text-sm mb-1">
                                     <span>Font size</span>
-                                    <span><span id="fontSizeValue">56</span> px</span>
+                                    <span><span id="fontSizeValue">39</span> px</span>
                                 </label>
-                                <input id="fontSize" type="range" min="16" max="120" value="56" class="w-full h-8" />
+                                <input id="fontSize" type="range" min="16" max="120" value="39" class="w-full h-8" />
                             </div>
                             <!-- Line height -->
                             <div>
@@ -268,18 +268,18 @@
                             <div>
                                 <label class="flex justify-between text-sm mb-1">
                                     <span>Speed</span>
-                                    <span><span id="speedValue">29</span></span>
+                                    <span><span id="speedValue">17</span></span>
                                 </label>
-                                <input id="speed" type="range" min="0" max="100" value="29" class="w-full h-8" />
+                                <input id="speed" type="range" min="0" max="100" value="17" class="w-full h-8" />
                                 <p class="text-xs text-gray-500 mt-1">0 = stop, higher = faster</p>
                             </div>
                             <!-- Text width -->
                             <div>
                                 <label class="flex justify-between text-sm mb-1">
                                     <span>Text width</span>
-                                    <span><span id="textWidthValue">70</span> ch</span>
+                                    <span><span id="textWidthValue">56</span> ch</span>
                                 </label>
-                                <input id="textWidth" type="range" min="40" max="120" value="70" class="w-full h-8" />
+                                <input id="textWidth" type="range" min="40" max="120" value="56" class="w-full h-8" />
                             </div>
                             <!-- Theme toggle -->
                             <div class="flex items-center justify-between">
@@ -328,11 +328,11 @@
                     </div>
                     <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-2">
                         <div class="flex items-center justify-between gap-2">
-                            <label for="readSpeed" class="text-sm font-medium">Speed <span id="readSpeedValue">29</span></label>
+                            <label for="readSpeed" class="text-sm font-medium">Speed <span id="readSpeedValue">17</span></label>
                             <input id="readSpeed" type="range" min="0" max="100" class="w-32 h-8 sm:w-20 md:w-32" />
                         </div>
                         <div class="flex items-center justify-between gap-2">
-                            <label for="readFontSize" class="text-sm font-medium">Size <span id="readFontSizeValue">56</span></label>
+                            <label for="readFontSize" class="text-sm font-medium">Size <span id="readFontSizeValue">39</span></label>
                             <input id="readFontSize" type="range" min="16" max="120" class="w-32 h-8 sm:w-16 md:w-20 lg:w-28" />
                         </div>
                         <div class="flex items-center justify-between gap-2">
@@ -340,7 +340,7 @@
                             <input id="readLineHeight" type="range" min="1.1" max="2.0" step="0.05" class="w-32 h-8 sm:w-16 md:w-20 lg:w-24" />
                         </div>
                         <div class="flex items-center justify-between gap-2">
-                            <label for="readTextWidth" class="text-sm font-medium">Width <span id="readTextWidthValue">70</span>ch</label>
+                            <label for="readTextWidth" class="text-sm font-medium">Width <span id="readTextWidthValue">56</span>ch</label>
                             <input id="readTextWidth" type="range" min="40" max="150" class="w-32 h-8 sm:w-16 md:w-20 lg:w-24" />
                         </div>
                         <div class="flex items-center justify-between gap-2">
@@ -430,10 +430,10 @@
             const STORAGE_KEY = 'teleprompterState';
             window.__DEFAULT_STATE__ = {
                 scriptText: '',
-                speed: 29,
-                fontSize: 56,
+                speed: 17,
+                fontSize: 39,
                 lineHeight: 1.4,
-                textWidthCh: 70,
+                textWidthCh: 56,
                 theme: 'dark',
                 fontFamily: 'sans-serif',
             };
@@ -475,7 +475,7 @@
                     this.container = container;
                     this.running = false;
                     this.paused = false;
-                    this.speedUnits = 29;
+                    this.speedUnits = 17;
                     this.pxPerSecMax = 300;
                     this.lastTs = 0;
                     this.rafId = null;
@@ -571,7 +571,7 @@
                 const computed = window.getComputedStyle(firstPara || container);
                 let linePx = parseFloat(computed.lineHeight);
                 if (isNaN(linePx) || linePx <= 0) {
-                    const fs = parseFloat(computed.fontSize) || state.fontSize || 56;
+                    const fs = parseFloat(computed.fontSize) || state.fontSize || 39;
                     linePx = fs * (state.lineHeight || 1.4);
                 }
                 const initial = firstPara ? Math.max(0, firstPara.offsetTop - (viewportHeight - linePx)) : 0;
@@ -927,7 +927,7 @@
                             if (!isNaN(lh) && lh > 0) return lh;
                             const fs = parseFloat(cs.fontSize);
                             const sLH = getState().lineHeight;
-                            return (isNaN(fs) ? 56 : fs) * (isNaN(sLH) ? 1.4 : sLH);
+                            return (isNaN(fs) ? 39 : fs) * (isNaN(sLH) ? 1.4 : sLH);
                         })();
                         // Desired: first line bottom aligns near viewport bottom
                         const desired = Math.max(0, firstPara.offsetTop - (readContainer.clientHeight - linePx));
