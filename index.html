@@ -238,6 +238,8 @@
                         <button id="btnSample" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample text ENG</button>
                         <button id="btnSample2" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample text PL</button>
                         <button id="btnClear" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Clear</button>
+                        <button id="btnPaste" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10" title="Paste from clipboard">Paste from clipboard</button>
+
                     </div>
                 </div>
 
@@ -597,6 +599,7 @@
                 const btnClear = document.getElementById('btnClear');
                 const btnSample = document.getElementById('btnSample');
                 const btnSample2 = document.getElementById('btnSample2');
+                const btnPaste = document.getElementById('btnPaste');
                 const btnResetSettings = document.getElementById('btnResetSettings');
                 const fontSize = document.getElementById('fontSize');
                 const lineHeight = document.getElementById('lineHeight');
@@ -660,6 +663,21 @@
                 });
 
                 btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; if (btnStartHeader) btnStartHeader.disabled = true; setState({ scriptText: '' }); updateSetupDuration(); });
+
+                btnPaste.addEventListener('click', async () => {
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        if (text != null) {
+                            scriptInput.value = text;
+                            btnStart.disabled = !scriptInput.value.trim();
+                            if (btnStartHeader) btnStartHeader.disabled = btnStart.disabled;
+                            setState({ scriptText: scriptInput.value });
+                            updateSetupDuration();
+                        }
+                    } catch (e) {
+
+                    }
+                });
 
                 btnSample.addEventListener('click', () => {
                     const sample = `This is a sample teleprompter script.\n\nUse the speed slider to control auto-scroll.\nPress Space to pause/resume. F to toggle fullscreen. S to stop.\n\nDrag with mouse or finger to scroll manually.\nAdjust font size and line height to your liking.`;
