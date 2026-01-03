@@ -235,8 +235,8 @@
                     </span>
                     <textarea id="scriptInput" class="flex-1 w-full min-h-48 sm:min-h-0 resize-none rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 p-2 sm:p-3 font-mono text-sm" placeholder="Paste or type your script here…"></textarea>
                     <div class="mt-2 flex flex-row sm:flex-row sm:items-center gap-2">
-                        <button id="btnSample" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample text ENG</button>
-                        <button id="btnSample2" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample text PL</button>
+                        <button id="btnSample" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample ENG</button>
+                        <button id="btnSample2" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample PL</button>
                         <button id="btnClear" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Clear</button>
                         <button id="btnPaste" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10" title="Paste from clipboard">Paste from clipboard</button>
 
@@ -680,13 +680,13 @@
                 });
 
                 btnSample.addEventListener('click', () => {
-                    const sample = `This is a sample teleprompter script.\n\nUse the speed slider to control auto-scroll.\nPress Space to pause/resume. F to toggle fullscreen. S to stop.\n\nDrag with mouse or finger to scroll manually.\nAdjust font size and line height to your liking.`;
+                    const sample = `This is a sample teleprompter script.\n\nUse the speed slider to control auto-scroll.\nPress Space to pause/resume. F to toggle fullscreen. S to stop.\n\nDrag with mouse or finger to scroll manually.\nAdjust font size and line height to your liking.\n\nHappy prompting!\nFreudenberger.`;
                     scriptInput.value = sample; btnStart.disabled = false; if (btnStartHeader) btnStartHeader.disabled = false; setState({ scriptText: sample }); updateSetupDuration();
                 });
 
                 btnSample2.addEventListener('click', () => {
                     // add Polish text as second sample
-                    const sample2 = `Witaj w aplikacji Web Teleprompter.\n\nTo jest inny przykładowy skrypt, który ma na celu zademonstrowanie funkcjonalności telepromptera.\nCzuj się swobodnie, modyfikuj tekst,\ndostosuj ustawienia\ni po prostu\nzaczynać czytać!\n\nUdanej prezentacji!`;
+                    const sample2 = `Witaj w aplikacji Web Teleprompter.\n\nWykorzystaj suwak prędkości, aby kontrolować automatyczne przewijanie.\nNaciśnij Spację, aby wstrzymać/wznowić. F, aby przełączyć tryb pełnoekranowy. S, aby zatrzymać.\n\nPrzeciągnij myszką lub palcem, aby przewijać ręcznie.\nDostosuj rozmiar czcionki i wysokość linii do swoich upodobań.\n\nUdanej prezentacji!\nFreudenberger.`;
                     scriptInput.value = sample2; btnStart.disabled = false; if (btnStartHeader) btnStartHeader.disabled = false; setState({ scriptText: sample2 }); updateSetupDuration();
                 });
 
