@@ -236,7 +236,7 @@
                     <textarea id="scriptInput" class="flex-1 w-full min-h-48 sm:min-h-0 resize-none rounded border border-gray-300 dark:border-white/10 bg-white dark:bg-black/30 p-2 sm:p-3 font-mono text-sm" placeholder="Paste or type your script here…"></textarea>
                     <div class="mt-2 flex flex-row sm:flex-row sm:items-center gap-2">
                         <button id="btnPaste" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10" title="Paste from clipboard">Paste from clipboard</button>
-                        [TODO: add one more start button]
+                        <button id="btnStartInline" class="px-3 py-1.5 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm">Start</button>
                         <button id="btnClear" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Clear</button>
                         <button id="btnSample" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample ENG</button>
                         <button id="btnSample2" class="px-3 py-1.5 rounded border border-gray-300 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/10">Sample PL</button>
@@ -596,6 +596,7 @@
                 const scriptInput = document.getElementById('scriptInput');
                 const btnStart = document.getElementById('btnStart');
                 const btnStartHeader = document.getElementById('btnStartHeader');
+                const btnStartInline = document.getElementById('btnStartInline');
                 const btnClear = document.getElementById('btnClear');
                 const btnSample = document.getElementById('btnSample');
                 const btnSample2 = document.getElementById('btnSample2');
@@ -636,6 +637,7 @@
 
                 btnStart.disabled = !scriptInput.value.trim();
                 if (btnStartHeader) btnStartHeader.disabled = btnStart.disabled;
+                if (btnStartInline) btnStartInline.disabled = btnStart.disabled;
 
                 const persist = window.__debounce__(() => setState({
                     scriptText: scriptInput.value,
@@ -645,7 +647,7 @@
                     textWidthCh: Number(textWidth.value),
                 }), 200);
 
-                scriptInput.addEventListener('input', () => { const disabled = !scriptInput.value.trim(); btnStart.disabled = disabled; if (btnStartHeader) btnStartHeader.disabled = disabled; persist(); updateSetupDuration(); });
+                scriptInput.addEventListener('input', () => { const disabled = !scriptInput.value.trim(); btnStart.disabled = disabled; if (btnStartHeader) btnStartHeader.disabled = disabled; if (btnStartInline) btnStartInline.disabled = disabled; persist(); updateSetupDuration(); });
                 fontSize.addEventListener('input', () => { fontSizeValue.textContent = fontSize.value; persist(); updateSetupDuration(); });
                 lineHeight.addEventListener('input', () => { lineHeightValue.textContent = lineHeight.value; persist(); updateSetupDuration(); });
                 speed.addEventListener('input', () => { speedValue.textContent = speed.value; persist(); updateSetupDuration(); });
@@ -662,7 +664,7 @@
                     setState({ fontFamily });
                 });
 
-                btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; if (btnStartHeader) btnStartHeader.disabled = true; setState({ scriptText: '' }); updateSetupDuration(); });
+                btnClear.addEventListener('click', () => { scriptInput.value = ''; btnStart.disabled = true; if (btnStartHeader) btnStartHeader.disabled = true; if (btnStartInline) btnStartInline.disabled = true; setState({ scriptText: '' }); updateSetupDuration(); });
 
                 btnPaste.addEventListener('click', async () => {
                     try {
@@ -671,6 +673,7 @@
                             scriptInput.value = text;
                             btnStart.disabled = !scriptInput.value.trim();
                             if (btnStartHeader) btnStartHeader.disabled = btnStart.disabled;
+                            if (btnStartInline) btnStartInline.disabled = btnStart.disabled;
                             setState({ scriptText: scriptInput.value });
                             updateSetupDuration();
                         }
@@ -681,17 +684,18 @@
 
                 btnSample.addEventListener('click', () => {
                     const sample = `This is a sample teleprompter script.\n\nUse the speed slider to control auto-scroll.\nPress Space to pause/resume. F to toggle fullscreen. S to stop.\n\nDrag with mouse or finger to scroll manually.\nAdjust font size and line height to your liking.\n\nHappy prompting!\nFreudenberger.`;
-                    scriptInput.value = sample; btnStart.disabled = false; if (btnStartHeader) btnStartHeader.disabled = false; setState({ scriptText: sample }); updateSetupDuration();
+                    scriptInput.value = sample; btnStart.disabled = false; if (btnStartHeader) btnStartHeader.disabled = false; if (btnStartInline) btnStartInline.disabled = false; setState({ scriptText: sample }); updateSetupDuration();
                 });
 
                 btnSample2.addEventListener('click', () => {
                     // add Polish text as second sample
                     const sample2 = `Witaj w aplikacji Web Teleprompter.\n\nWykorzystaj suwak prędkości, aby kontrolować automatyczne przewijanie.\nNaciśnij Spację, aby wstrzymać/wznowić. F, aby przełączyć tryb pełnoekranowy. S, aby zatrzymać.\n\nPrzeciągnij myszką lub palcem, aby przewijać ręcznie.\nDostosuj rozmiar czcionki i wysokość linii do swoich upodobań.\n\nUdanej prezentacji!\nFreudenberger.`;
-                    scriptInput.value = sample2; btnStart.disabled = false; if (btnStartHeader) btnStartHeader.disabled = false; setState({ scriptText: sample2 }); updateSetupDuration();
+                    scriptInput.value = sample2; btnStart.disabled = false; if (btnStartHeader) btnStartHeader.disabled = false; if (btnStartInline) btnStartInline.disabled = false; setState({ scriptText: sample2 }); updateSetupDuration();
                 });
 
                 btnStart.addEventListener('click', () => { if (!scriptInput.value.trim()) return; switchToReading(); });
                 if (btnStartHeader) btnStartHeader.addEventListener('click', () => { if (!scriptInput.value.trim()) return; switchToReading(); });
+                if (btnStartInline) btnStartInline.addEventListener('click', () => { if (!scriptInput.value.trim()) return; switchToReading(); });
 
                 // Reset to defaults (preserve script text)
                 btnResetSettings.addEventListener('click', () => {
@@ -714,6 +718,7 @@
                     // Keep header start in sync with main start button
                     btnStart.disabled = !preservedScript.trim();
                     if (btnStartHeader) btnStartHeader.disabled = btnStart.disabled;
+                    if (btnStartInline) btnStartInline.disabled = btnStart.disabled;
                     updateSetupDuration();
                 });
 
